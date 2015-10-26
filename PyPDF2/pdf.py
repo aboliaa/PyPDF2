@@ -75,6 +75,14 @@ else:
     from hashlib import md5
 import uuid
 
+# These permissions can be used with the encrypt method.
+# Found these values here: http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
+PERM_NONE = 0
+PERM_PRINT = 2052
+PERM_MODIFY = 256
+PERM_COPY_TEXT = 16
+PERM_ANNOTATE = 32
+PERM_ALL = PERM_PRINT | PERM_MODIFY | PERM_COPY_TEXT | PERM_ANNOTATE
 
 class PdfFileWriter(object):
     """
@@ -395,7 +403,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, perm_mask = -1):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -407,6 +415,7 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param int perm_mask: bitmask of permissions
         """
         import time, random
         if owner_pwd == None:
@@ -420,7 +429,7 @@ class PdfFileWriter(object):
             rev = 2
             keylen = int(40 / 8)
         # permit everything:
-        P = -1
+        P = perm_mask
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
